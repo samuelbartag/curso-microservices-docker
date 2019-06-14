@@ -1,0 +1,60 @@
+version: '2'
+services:
+  web:
+    image: samuelbartag/web
+    container_name: curso-web
+    ports:
+      - '${HTTP_PORT}:80'
+      - '${HTTPS_PORT}:443'
+    links:
+      - 'php:php'
+    volumes:
+      - './app:/var/www'
+      - './logs/nginx:/var/log/nginx/:rw'
+    networks:
+      - elk
+
+  php:
+    image: samuelbartag/php
+    container_name: curso-php
+    volumes:
+      - './app:/var/www'
+      - './logs/php:/var/log/php:rw'
+    ports:
+      - '9000:9000'
+    environment:
+      - DB_PORT=3306
+      - DB_HOST=mysql
+    links:
+      - 'mysql:mysql'
+      - 'cache:cache'
+    networks:
+      - elk
+
+  cache:
+    image: redis
+    container_name: curso-cache
+    ports:
+      - '6379:6379'
+    networks:
+      - elk
+
+  mysql:
+    image: mysql
+    container_name: curso-db
+    volumes:
+      - './logs/mysql:/var/log/mysql:rw'
+      - './data/mysql:/var/lib/mysql:rw'
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=laravel
+      - MYSQL_USER=lara-user
+      - MYSQL_PASSWORD=lara-pass
+    networks:
+      - elk
+
+networks:
+  elk:
+    driver: bridge
